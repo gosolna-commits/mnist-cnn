@@ -1,13 +1,10 @@
-#app.py
+# app.py
 # pip install streamlit-drawable-canvas
-# streamlit run Göran_ML_CNN_sparad.py
-
-# mnist-cnn-app-bappbydwvbjjfcrt63rted4.streamlit.app
+# streamlit run app.py
 
 import os
 
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
-
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 
 import streamlit as st
@@ -22,7 +19,10 @@ from tensorflow.keras.models import load_model
 # -----------------------------
 with open("accuracy.txt", "r") as f:
     accuracy = f.read()
-    
+
+# -----------------------------
+# Session state för canvas reset
+# -----------------------------
 if "canvas_key" not in st.session_state:
     st.session_state.canvas_key = 0
 
@@ -31,11 +31,21 @@ if "canvas_key" not in st.session_state:
 # -----------------------------
 model = load_model("mnist_cnn.keras")
 
+# -----------------------------
+# Titel
+# -----------------------------
 st.title("MNIST CNN Digit Recognizer")
 
 st.write(f"Model Accuracy: {float(accuracy)*100:.2f}%")
 
 st.write("Rita en siffra mellan 0 och 9")
+
+# -----------------------------
+# Rensa-knapp
+# -----------------------------
+if st.button("Rensa"):
+    st.session_state.canvas_key += 1
+    st.rerun()
 
 # -----------------------------
 # Canvas
@@ -51,98 +61,60 @@ canvas_result = st_canvas(
     key=f"canvas_{st.session_state.canvas_key}",
 )
 
-if "canvas_key" not in st.session_state:
-    st.session_state.canvas_key = 0
-
-#if reset_canvas:
-#    st.session_state["canvas"] = None
-#    st.rerun()
-
 # -----------------------------
 # Om något ritats
 # -----------------------------
-# if canvas_result.image_data is not None:
-
 if canvas_result.image_data is not None:
+
     img = canvas_result.image_data
+
+    # Ta grayscale-kanalen
     img_gray = img[:, :, 0]
 
-    # Hur många ljusa pixlar finns?
+    # Räkna ljusa pixlar
     pixels_drawn = np.sum(img_gray > 200)
 
-    # Kräv tydlig ritning
+    # Visa prediction endast om något ritats
     if pixels_drawn > 500:
 
-        img = canvas_result.image_data
-
-    # -----------------------------
-    # Ta grayscale-kanalen
-    # -----------------------------
-    img_gray = img[:, :, 0]
-
-    # -----------------------------
-    # Kontrollera om något ritats
-    # -----------------------------
-    # pixels_drawn = np.count_nonzero(img_gray > 50)
-
-    # Kräver minst 50 ljusa pixlar
-    if pixels_drawn > 50:
-
-        # -----------------------------
         # PIL image
-        # -----------------------------
         img_pil = Image.fromarray(
             img_gray.astype(np.uint8)
         )
 
-        # -----------------------------
-        # Resize
-        # -----------------------------
+        # Resize till 28x28
         img_pil = img_pil.resize((28, 28))
 
-        # -----------------------------
-        # Convert to numpy
-        # -----------------------------
+        # Convert till numpy
         img_array = np.array(img_pil)
 
-        # -----------------------------
         # Normalize
-        # -----------------------------
         img_array = img_array.astype("float32") / 255.0
 
-        # -----------------------------
         # CNN input shape
-        # -----------------------------
         img_input = img_array.reshape(1, 28, 28, 1)
 
-        model.predict(img_input, verbose=0)
-
-        # -----------------------------
         # Predict
-        # -----------------------------
-        prediction = model.predict(img_input)
+        prediction = model.predict(
+            img_input,
+            verbose=0
+        )
 
         predicted_digit = np.argmax(prediction)
 
         probabilities = prediction[0]
 
-        # -----------------------------
-        # Show image
-        # -----------------------------
+        # Visa bild
         st.image(img_array, width=150)
 
-        # -----------------------------
-        # Show prediction
-        # -----------------------------
+        # Visa prediction
         st.header(f"Gissning: {predicted_digit}")
 
-        # -----------------------------
-        # Show probabilities
-        # -----------------------------
+        # Visa sannolikheter
         st.subheader("Sannolikheter")
 
         for i, prob in enumerate(probabilities):
-
             st.write(f"{i}: {prob:.2%}")
 
         st.bar_chart(probabilities)
+        
