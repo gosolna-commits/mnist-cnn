@@ -1,8 +1,8 @@
 #app.py
-
+# pip install streamlit-drawable-canvas
 # streamlit run Göran_ML_CNN_sparad.py
 
-#mnist-cnn-app-bappbydwvbjjfcrt63rted4.streamlit.app
+# mnist-cnn-app-bappbydwvbjjfcrt63rted4.streamlit.app
 
 import os
 
@@ -23,6 +23,8 @@ from tensorflow.keras.models import load_model
 with open("accuracy.txt", "r") as f:
     accuracy = f.read()
     
+if "canvas_key" not in st.session_state:
+    st.session_state.canvas_key = 0
 
 # -----------------------------
 # Ladda modell
@@ -46,15 +48,32 @@ canvas_result = st_canvas(
     width=280,
     height=280,
     drawing_mode="freedraw",
-    key="canvas",
+    key=f"canvas_{st.session_state.canvas_key}",
 )
+
+if "canvas_key" not in st.session_state:
+    st.session_state.canvas_key = 0
+
+#if reset_canvas:
+#    st.session_state["canvas"] = None
+#    st.rerun()
 
 # -----------------------------
 # Om något ritats
 # -----------------------------
-if canvas_result.image_data is not None:
+# if canvas_result.image_data is not None:
 
+if canvas_result.image_data is not None:
     img = canvas_result.image_data
+    img_gray = img[:, :, 0]
+
+    # Hur många ljusa pixlar finns?
+    pixels_drawn = np.sum(img_gray > 200)
+
+    # Kräv tydlig ritning
+    if pixels_drawn > 500:
+
+        img = canvas_result.image_data
 
     # -----------------------------
     # Ta grayscale-kanalen
@@ -64,7 +83,7 @@ if canvas_result.image_data is not None:
     # -----------------------------
     # Kontrollera om något ritats
     # -----------------------------
-    pixels_drawn = np.count_nonzero(img_gray > 50)
+    # pixels_drawn = np.count_nonzero(img_gray > 50)
 
     # Kräver minst 50 ljusa pixlar
     if pixels_drawn > 50:
@@ -95,6 +114,8 @@ if canvas_result.image_data is not None:
         # CNN input shape
         # -----------------------------
         img_input = img_array.reshape(1, 28, 28, 1)
+
+        model.predict(img_input, verbose=0)
 
         # -----------------------------
         # Predict
