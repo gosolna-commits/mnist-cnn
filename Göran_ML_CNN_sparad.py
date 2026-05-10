@@ -34,7 +34,7 @@ model = load_model("mnist_cnn.keras")
 # -----------------------------
 # Titel
 # -----------------------------
-st.title("MNIST CNN Digit Recognizer")
+st.title("MNIST CNN Digit Recognizer XXX")
 
 st.write(f"Model Accuracy: {float(accuracy)*100:.2f}%")
 
@@ -117,4 +117,3 @@ if canvas_result.image_data is not None:
             st.write(f"{i}: {prob:.2%}")
 
         st.bar_chart(probabilities)
-        
